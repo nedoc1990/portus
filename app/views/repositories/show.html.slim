@@ -1,0 +1,101 @@
+.header.clearfix
+  h4 data-id="#{@repository.id}" ref="repoTitle" class="repository-title pull-left"
+    a[
+      href="javascript:void(0)"
+      class="btn-link repository-information-icon"
+      data-placement="right"
+      data-toggle="popover"
+      data-trigger="focus click hover"
+      data-title="More information"
+      data-content="#{render_repository_information(@repository)}"
+      data-html="true"]
+      i.fa.fa-info-circle
+    | &nbsp;
+    = link_to @repository.namespace.clean_name, @repository.namespace, { ref: 'repoLink' }
+    | /
+    = @repository.name
+
+
+  .btn-toolbar.pull-right
+    .btn-group
+      = link_to toggle_star_repository_path(@repository), method: :post,
+        class: 'btn btn-primary', remote: true, id: 'toggle_star',
+        data: {placement: 'bottom', toggle: 'tooltip'},
+        title: (@repository.starred_by?(current_user) ? 'Unstar repository' : 'Star repository')
+        - if @repository.starred_by?(current_user)
+          i.fa.fa-star
+        - else
+          i.fa.fa-star-o
+        | &nbsp;
+        span#star-counter.badge
+          = @repository.stars.count
+
+    - if can_destroy?(@repository)
+      .btn-group
+        button.btn.btn-danger.repository-delete-btn[
+          data-container="body"
+          data-placement="left"
+          data-toggle="popover"
+          data-title="Please confirm"
+          data-content="<p>Are you sure you want to remove this \
+          repository?</p><a class='btn btn-default'>No</a> <a class='btn \
+          btn-primary repository-confirm-btn' data-method='delete' \
+          href='#{url_for(@repository)}'>Yes</a>"
+          data-html="true"
+          role="button"
+          title="Delete image"]
+          i.fa.fa-trash
+          '  Delete repository
+
+.panel.panel-default
+  .panel-heading
+    .row
+      .col-xs-6
+        h5 Tags
+      .col-xs-6.text-right
+        - if can_destroy?(@repository)
+          <delete-tag-action :state="state"></delete-tag-action>
+
+  .panel-body
+    <loading-icon v-if="isLoading"></loading-icon>
+
+    .table-responsive.tags
+      <tags-not-loaded v-if="notLoaded"></tags-not-loaded>
+      <tags-table v-if="!isLoading && !notLoaded" :tags="tags" :can-destroy="#{can_destroy?(@repository)}" :state="state" :security-enabled="#{security_vulns_enabled?}"></tags-table>
+
+.comments-wrapper
+  .comment-form.collapse
+    = form_for [@repository, @repository.comments.build], remote: true, html: {id: 'new-comment-form', class: 'form-horizontal', role: 'form'} do |f|
+      .form-group
+        = f.label :comment, {class: 'control-label col-md-2'}
+        .col-md-7
+          = f.text_area(:body, class: 'form-control fixed-size', required: false, placeholder: "Please write a comment.")
+      .form-group
+        .col-md-offset-2.col-md-7
+          = f.submit('Add', class: 'btn btn-primary')
+
+  .panel.panel-default
+    .panel-heading.clearfix
+      .row
+        .col-sm-6
+          h5
+            span class="number_of_comments badge"
+              = @repository.comments.count
+            span class="comment_string"
+              - if @repository.comments.count == 1
+                |  Comment
+              - else
+                |  Comments
+        .col-sm-6.text-right
+          a.btn.btn-xs.btn-link.add-comment role="button"
+            i.fa.fa-comment
+            |  Write a comment
+
+    #comments.panel-body.panel-no-side-padding
+      .container-full
+        - if @repository_comments.empty?
+          .no-comments-found
+            ' Nobody has left a comment yet.
+        - else
+          - @repository_comments.each do |comment|
+            = render(comment)

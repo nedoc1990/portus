@@ -1,0 +1,14 @@
+/.bundle
+/bundle
+/**/*.swp
+/log/*
+/tmp
+/.vagrant
+/coverage
+/public/assets
+/config/config-local.yml
+/bin/portus
+/docker-compose.overlay.yml
+/spec/integration/fixtures/config.yml
+/spec/integration/fixtures/data
+/node_modules
